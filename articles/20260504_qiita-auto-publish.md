@@ -6,7 +6,7 @@ topics:
   - Qiita
   - GitHub
   - Qiita-CLI
-published: false
+published: true
 ---
 
 :::message
@@ -16,10 +16,11 @@ published: false
 - GitHub Actionsで `qiita-publisher` リポジトリへ自動 push することで投稿・更新を自動化できる
 :::
 
+# はじめに
+Qiitaの執筆を行う際に、ローカルで書いて、それをGitHubリポジトリで管理して、そこからQiitaに自動で投稿・更新したい！！！と強く思ったため、Qiita-CLIを導入してみました。
+
 ---
-
 ## Phase1: Install - Qiita-CLIの導入
-
 インストールは以下の公式リンクを参照
 - [Qiitaの記事をGitHubリポジトリで管理する方法 - Qiita](https://qiita.com/Qiita/items/32c79014509987541130)
 
