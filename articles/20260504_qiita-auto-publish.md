@@ -279,7 +279,7 @@ Obsidian に画像を貼り付けると以下の形式で挿入されます。
 
 ```bash
 # R2 に画像をアップロードしてから push する
-git add articles/your-article.md
+git add public/your-article.md
 git commit -m "publish: your-article"
 git push
 ```

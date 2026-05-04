@@ -12,6 +12,7 @@ published: false
 :::message
 **Key Points**
 - ZennはGitHub連携機能によって記事の自動投稿・更新を実現することができる
+- npxでの実行も可能となる
 :::
 
 
