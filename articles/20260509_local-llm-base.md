@@ -1,6 +1,6 @@
 ---
 title: "ローカルLLMを動かす基盤選び"
-emoji: "📝"
+emoji: "🏯"
 type: tech
 topics:
   - LocalLLM
