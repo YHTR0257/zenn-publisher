@@ -5,7 +5,7 @@ type: tech
 topics:
   - Qiita
   - Zenn
-  - GitHub-Actions
+  - GitHubActions
   - Obsidian
   - Cloudflare-R2
 published: true

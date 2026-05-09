@@ -18,6 +18,7 @@ published: true
 
 # はじめに
 Qiitaの執筆を行う際に、ローカルで書いて、それをGitHubリポジトリで管理して、そこからQiitaに自動で投稿・更新したい！！！と強く思ったため、Qiita-CLIを導入してみました。
+思ったより簡単に導入と自動化ができました。
 
 ---
 ## Phase1: Install - Qiita-CLIの導入
@@ -288,6 +289,12 @@ Obsidian の `![diagram](https://pub-61138f8207b54a509ef5e6195db54d4f.r2.dev/ima
 ```markdown
 ![diagram](https://pub-xxx.r2.dev/images/diagram.png)
 ```
+
+# まとめ
+- Qiita CLI を使うと、ローカルで書いた記事を GitHub リポジトリで管理し、そこから Qiita に自動で投稿・更新できる
+- フロントマターで記事のタイトルやタグ、公開設定を管理できる
+- Obsidian の callout 記法は Qiita の `:::note` 記法に変換される
+- 画像は Cloudflare R2 にアップロードして URL で参照する形で管理すると良い
 
 
 ## Sources
