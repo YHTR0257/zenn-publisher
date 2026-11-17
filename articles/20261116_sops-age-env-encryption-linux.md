@@ -64,7 +64,7 @@ cat secrets/dev.enc.env
 >>> output
 API_KEY=ENC[AES256_GCM,data:...,iv:...,tag:...,type:str]
 sops_age__list_0__map_enc=-----BEGIN AGE ENCRYPTED FILE-----\n...
-sops_age__list_0__map_recipient=age1<devの公開鍵>
+sops_age__list_0__map_recipient=<devPubkey>
 sops_lastmodified=2026-11-16T00:00:00Z
 sops_mac=ENC[AES256_GCM,data:...,iv:...,tag:...,type:str]
 sops_unencrypted_suffix=_unencrypted
@@ -122,7 +122,7 @@ v1.3.2
 
 ```bash
 eval "$(direnv hook bash)"
-export KEYSTORE="$HOME/SYNC_FOLDER/sops-keys"   # クラウド同期フォルダの実パスに置き換え
+export KEYSTORE="$HOME/<syncFolder>/sops-keys"   # クラウド同期フォルダの実パスに置き換え
 ```
 
 ## 1-2. 平文で置いていた値はすべて再発行する
@@ -147,15 +147,15 @@ INF no leaks found
 
 ## 1-3. dev鍵を作り、パスフレーズで暗号化してクラウドに置く
 
-鍵はrepoごとに作ります。以降の`REPO_NAME`は、repoの名前に置き換えてください。`age-keygen`の出力をそのまま`age -p`で暗号化するので、平文の鍵はディスクに残りません。
+鍵はrepoごとに作ります。以降の`<repoName>`は、repoの名前に置き換えてください。`age-keygen`の出力をそのまま`age -p`で暗号化するので、平文の鍵はディスクに残りません。
 
 ```bash
 >>> input
 umask 077; mkdir -p "$KEYSTORE" ~/.config/sops/age
-age-keygen | age -p -o "$KEYSTORE/REPO_NAME.dev.agekey.age"
+age-keygen | age -p -o "$KEYSTORE/<repoName>.dev.agekey.age"
 
 >>> output
-Public key: age1<devの公開鍵>
+Public key: <devPubkey>
 Enter passphrase (leave empty to autogenerate a secure one):
 Confirm passphrase:
 ```
@@ -172,10 +172,10 @@ prod鍵も同じコマンドで作ります。端末には一度も書き出さ�
 
 ```bash
 >>> input
-age-keygen | age -p -o "$KEYSTORE/REPO_NAME.prod.agekey.age"
+age-keygen | age -p -o "$KEYSTORE/<repoName>.prod.agekey.age"
 
 >>> output
-Public key: age1<prodの公開鍵>
+Public key: <prodPubkey>
 Enter passphrase (leave empty to autogenerate a secure one):
 Confirm passphrase:
 ```
@@ -187,7 +187,7 @@ Confirm passphrase:
 ```bash
 >>> input
 umask 077; mkdir -p ~/.config/sops/age
-age -d -o ~/.config/sops/age/REPO_NAME.agekey "$KEYSTORE/REPO_NAME.dev.agekey.age"
+age -d -o ~/.config/sops/age/<repoName>.agekey "$KEYSTORE/<repoName>.dev.agekey.age"
 
 >>> output
 Enter passphrase:
@@ -200,9 +200,9 @@ Enter passphrase:
 ```yaml
 creation_rules:
   - path_regex: secrets/dev\.enc\.env$
-    age: DEV_PUBKEY
+    age: <devPubkey>
   - path_regex: secrets/prod\.enc\.env$
-    age: PROD_PUBKEY
+    age: <prodPubkey>
 ```
 
 :::message alert
@@ -228,7 +228,7 @@ sops edit secrets/prod.enc.env
 repoのルートに`.envrc`を作ります。鍵ファイルを`SOPS_AGE_KEY_FILE`で指定し、復号結果をdirenvの`dotenv`でそのまま読み込みます。復号結果はファイルに書かれません。`.envrc`には値を書かないのでコミットして構いません。
 
 ```bash
-export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/REPO_NAME.agekey"
+export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/<repoName>.agekey"
 watch_file secrets/dev.enc.env
 dotenv <(sops decrypt secrets/dev.enc.env)
 ```
@@ -265,11 +265,11 @@ GitHubのSettings → Environmentsで`prod`環境を作り、デプロイでき�
 
 ```bash
 >>> input
-age -d "$KEYSTORE/REPO_NAME.prod.agekey.age" | gh secret set SOPS_AGE_KEY --env prod
+age -d "$KEYSTORE/<repoName>.prod.agekey.age" | gh secret set SOPS_AGE_KEY --env prod
 
 >>> output
 Enter passphrase:
-✓ Set Actions secret SOPS_AGE_KEY for prod environment in OWNER/REPO_NAME
+✓ Set Actions secret SOPS_AGE_KEY for prod environment in <owner>/<repoName>
 ```
 
 ![20261116_sops-github-env-secret](https://pub-61138f8207b54a509ef5e6195db54d4f.r2.dev/images/articles/20261116_sops-github-env-secret.png)
@@ -295,7 +295,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Install sops
         run: |
-          curl -fsSL -o sops "https://github.com/getsops/sops/releases/download/vSOPS_VERSION/sops-vSOPS_VERSION.linux.amd64"
+          curl -fsSL -o sops "https://github.com/getsops/sops/releases/download/v<sopsVersion>/sops-v<sopsVersion>.linux.amd64"
           chmod +x sops && sudo mv sops /usr/local/bin/sops
       - name: Decrypt prod secrets
         env:
@@ -347,7 +347,7 @@ prodは、クラウドのprod鍵をパスフレーズで一時的に復号して
 
 ```bash
 >>> input
-SOPS_AGE_KEY="$(age -d "$KEYSTORE/REPO_NAME.prod.agekey.age")" sops edit secrets/prod.enc.env
+SOPS_AGE_KEY="$(age -d "$KEYSTORE/<repoName>.prod.agekey.age")" sops edit secrets/prod.enc.env
 
 >>> output
 Enter passphrase:
@@ -364,8 +364,8 @@ git config core.hooksPath .githooks
 direnv allow
 
 >>> output
-direnv: loading ~/path/to/REPO_NAME/.envrc
-direnv: export +KEY_NAME ... +SOPS_AGE_KEY_FILE
+direnv: loading ~/path/to/<repoName>/.envrc
+direnv: export +<keyName> ... +SOPS_AGE_KEY_FILE
 ```
 
 ## メンバーが抜けたら鍵を入れ替え、値も再発行する
@@ -380,22 +380,22 @@ direnv: export +KEY_NAME ... +SOPS_AGE_KEY_FILE
 
 ```bash
 >>> input
-mv "$KEYSTORE/REPO_NAME.dev.agekey.age" "$KEYSTORE/REPO_NAME.dev.agekey.age.old"
-age-keygen | age -p -o "$KEYSTORE/REPO_NAME.dev.agekey.age"
+mv "$KEYSTORE/<repoName>.dev.agekey.age" "$KEYSTORE/<repoName>.dev.agekey.age.old"
+age-keygen | age -p -o "$KEYSTORE/<repoName>.dev.agekey.age"
 
 >>> output
-Public key: age1<新しい公開鍵>
+Public key: <newPubkey>
 Enter passphrase (leave empty to autogenerate a secure one):
 Confirm passphrase:
 ```
 
 **② 鍵を差し替え、データ鍵ごと作り直す**
 
-表示された新しい公開鍵（`NEW_PUBKEY`）で、`.sops.yaml`のdevの公開鍵を書き換えます。そのうえで、旧鍵がまだ手元にある端末で次を実行し、コミットしてpushします。`rotate`は、データ鍵を作り直すと同時に宛先を新しい鍵に差し替えます。
+表示された新しい公開鍵（`<newPubkey>`）で、`.sops.yaml`のdevの公開鍵を書き換えます。書き換える前の公開鍵が`<oldPubkey>`です。そのうえで、旧鍵がまだ手元にある端末で次を実行し、コミットしてpushします。`rotate`は、データ鍵を作り直すと同時に宛先を新しい鍵に差し替えます。
 
 ```bash
 >>> input
-sops rotate -i --add-age NEW_PUBKEY --rm-age OLD_PUBKEY secrets/dev.enc.env
+sops rotate -i --add-age <newPubkey> --rm-age <oldPubkey> secrets/dev.enc.env
 
 >>> output
 （出力なし）
@@ -414,16 +414,16 @@ prod鍵の場合は、②で旧prod鍵を渡し、③で配る代わりにGitHub
 ```bash
 >>> input
 # ②
-SOPS_AGE_KEY="$(age -d "$KEYSTORE/REPO_NAME.prod.agekey.age.old")" \
-  sops rotate -i --add-age NEW_PUBKEY --rm-age OLD_PUBKEY secrets/prod.enc.env
+SOPS_AGE_KEY="$(age -d "$KEYSTORE/<repoName>.prod.agekey.age.old")" \
+  sops rotate -i --add-age <newPubkey> --rm-age <oldPubkey> secrets/prod.enc.env
 # ③
-age -d "$KEYSTORE/REPO_NAME.prod.agekey.age" | gh secret set SOPS_AGE_KEY --env prod
+age -d "$KEYSTORE/<repoName>.prod.agekey.age" | gh secret set SOPS_AGE_KEY --env prod
 
 >>> output
 Enter passphrase:
 （②は出力なし）
 Enter passphrase:
-✓ Set Actions secret SOPS_AGE_KEY for prod environment in OWNER/REPO_NAME
+✓ Set Actions secret SOPS_AGE_KEY for prod environment in <owner>/<repoName>
 ```
 
 :::message
@@ -438,6 +438,40 @@ Enter passphrase:
 | prod鍵を取り出している最中の侵害 | prod鍵も入れ替え、prodの値を再発行 |
 | GitHub側の侵害（疑い） | prod鍵を入れ替え、prodの値を再発行 |
 | クラウドと端末の両方の侵害 | パスフレーズを変え、該当repoの鍵をすべて入れ替える |
+
+# Tips：よく使う操作を関数にする
+
+`<repoName>`を毎回入力するのは手間です。`~/.bashrc`に次の関数を追記すると、repoの中で実行するだけでrepo名を自動で補えます。
+
+```bash
+_repo() { basename "$(git rev-parse --show-toplevel)"; }
+
+# 1-5 dev鍵を配置する
+sops-dev-setup() {
+  umask 077; mkdir -p ~/.config/sops/age
+  age -d -o ~/.config/sops/age/"$(_repo)".agekey "$KEYSTORE/$(_repo).dev.agekey.age"
+}
+# Phase 3 prodの値を編集する
+sops-prod-edit() {
+  SOPS_AGE_KEY="$(age -d "$KEYSTORE/$(_repo).prod.agekey.age")" sops edit secrets/prod.enc.env
+}
+# 2-5 prod鍵をGitHubに登録する
+sops-prod-push() {
+  age -d "$KEYSTORE/$(_repo).prod.agekey.age" | gh secret set SOPS_AGE_KEY --env prod
+}
+```
+
+`.envrc`も次のように書けば、repo名を書き換えずに他のrepoへコピーできます。
+
+```bash
+export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/$(basename "$PWD").agekey"
+watch_file secrets/dev.enc.env
+dotenv <(sops decrypt secrets/dev.enc.env)
+```
+
+:::message alert
+どちらも、ディレクトリ名がrepo名と一致していることが前提です。別名でcloneした場合は鍵ファイルが見つかりません。
+:::
 
 # まとめ
 
